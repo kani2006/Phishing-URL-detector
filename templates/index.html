@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Phishing Detector</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #f8fafc;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #94a3b8;
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── Input card ── */
+    .card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card label {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: #6366f1; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #4f46e5; }
+
+    .btn-ghost {
+      background: #2d3148;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      padding: 0.45rem 1rem;
+    }
+
+    .btn-ghost:hover { background: #363b5e; color: #e2e8f0; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result card ── */
+    #result { display: none; }
+
+    .verdict {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.2rem 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 1.2rem;
+    }
+
+    .verdict.high    { background: #3b1a1a; border: 1px solid #ef4444; }
+    .verdict.medium  { background: #2d2510; border: 1px solid #f59e0b; }
+    .verdict.low     { background: #0f2d1a; border: 1px solid #22c55e; }
+
+    .verdict-icon { font-size: 2rem; }
+
+    .verdict-text h2 { font-size: 1.2rem; }
+    .verdict-text p  { font-size: 0.85rem; color: #94a3b8; margin-top: 0.2rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-high   { background: #ef4444; color: #fff; }
+    .badge-medium { background: #f59e0b; color: #000; }
+    .badge-low    { background: #22c55e; color: #000; }
+
+    /* ── Score bars ── */
+    .scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .score-box {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      text-align: center;
+    }
+
+    .score-box .score-val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .score-box .score-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+    }
+
+    .bar-wrap {
+      background: #2d3148;
+      border-radius: 999px;
+      height: 6px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+
+    /* ── URLs section ── */
+    .section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+      margin-bottom: 0.6rem;
+    }
+
+    .url-list { list-style: none; }
+
+    .url-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 0.5rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .url-item span {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      word-break: break-all;
+      flex: 1;
+    }
+
+    /* ── Sandbox modal ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modal-overlay.open { display: flex; }
+
+    #modal {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 780px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    #modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: #2d3148;
+      border: none;
+      color: #94a3b8;
+      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #modal-close:hover { background: #363b5e; color: #fff; }
+
+    #modal h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: #f8fafc;
+      padding-right: 2rem;
+      word-break: break-all;
+    }
+
+    .signal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .signal-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #0f1117;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+    }
+
+    .signal-item .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-red   { background: #ef4444; }
+    .dot-green { background: #22c55e; }
+
+    .text-preview {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 0.9rem;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+    }
+
+    .redirect-chain {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+
+    .redirect-chain span {
+      background: #2d3148;
+      border-radius: 4px;
+      padding: 0.15rem 0.5rem;
+      margin-right: 0.3rem;
+      display: inline-block;
+      margin-bottom: 0.3rem;
+    }
+
+    .form-detail {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.82rem;
+      color: #94a3b8;
+    }
+
+    .error-box {
+      background: #2d1a1a;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #fca5a5;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .loading-inspect {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .loading-inspect .spinner {
+      display: inline-block;
+      margin: 0 auto 0.5rem;
+    }
+
+    /* ── Misc ── */
+    .mt-1 { margin-top: 1rem; }
+    .divider {
+      border: none;
+      border-top: 1px solid #2d3148;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🛡️ Phishing Detector</h1>
+    <p>Paste email content below to analyze it for phishing signals</p>
+  </header>
+
+  <!-- Input -->
+  <div class="card">
+    <label for="email-input">Email Content</label>
+    <textarea id="email-input" placeholder="Paste the full email body here...&#10;&#10;Example:&#10;Dear customer, your account has been suspended. Verify immediately at http://paypal-secure.xyz/login"></textarea>
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" id="analyze-btn" onclick="analyzeEmail()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-text">Analyze Email</span>
+      </button>
+      <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result">
+
+    <!-- Verdict banner -->
+    <div class="verdict" id="verdict-banner">
+      <div class="verdict-icon" id="verdict-icon"></div>
+      <div class="verdict-text">
+        <h2 id="verdict-title"></h2>
+        <p id="verdict-sub"></p>
+      </div>
+      <span class="badge" id="verdict-badge"></span>
+    </div>
+
+    <!-- Score bars -->
+    <div class="scores">
+      <div class="score-box">
+        <div class="score-val" id="score-final">—</div>
+        <div class="score-label">Final Score</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-final" style="width:0%"></div></div>
+      </div>
+      <div class="score-box">
+        <div class="score-val" id="score-email">—</div>
+        <div class="score-label">Email NLP</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-email" style="width:0%; background:#6366f1"></div></div>
+      </div>
+      <div class="score-box">
+        <div class="score-val" id="score-url">—</div>
+        <div class="score-label">URL Risk</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-url" style="width:0%; background:#f59e0b"></div></div>
+      </div>
+    </div>
+
+    <!-- URLs found -->
+    <div class="card" id="urls-section" style="display:none">
+      <div class="section-title">URLs Found</div>
+      <ul class="url-list" id="url-list"></ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- Sandbox Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <button id="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modal-url-title">Inspecting URL...</h3>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+  let lastAnalysis = null;
+
+  async function analyzeEmail() {
+    const text = document.getElementById("email-input").value.trim();
+    if (!text) return;
+
+    setLoading(true);
+    document.getElementById("result").style.display = "none";
+
+    try {
+      const res = await fetch("/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email_text: text }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        alert("Error: " + data.error);
+        return;
+      }
+
+      lastAnalysis = data;
+      renderResult(data);
+    } catch (e) {
+      alert("Could not reach the API. Is app.py running?");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResult(data) {
+    const resultEl = document.getElementById("result");
+    resultEl.style.display = "block";
+
+    // Verdict
+    const banner = document.getElementById("verdict-banner");
+    const icon   = document.getElementById("verdict-icon");
+    const title  = document.getElementById("verdict-title");
+    const sub    = document.getElementById("verdict-sub");
+    const badge  = document.getElementById("verdict-badge");
+
+    banner.className = "verdict " + data.risk_level;
+
+    const config = {
+      high:   { icon: "🚨", title: "Phishing Detected",       sub: "This email shows strong phishing signals. Do not click any links.",  badgeClass: "badge-high" },
+      medium: { icon: "⚠️",  title: "Suspicious Email",        sub: "This email has some suspicious signals. Proceed with caution.",       badgeClass: "badge-medium" },
+      low:    { icon: "✅",  title: "Looks Safe",              sub: "No significant phishing signals detected.",                           badgeClass: "badge-low" },
+    };
+
+    const c = config[data.risk_level] || config.low;
+    icon.textContent  = c.icon;
+    title.textContent = c.title;
+    sub.textContent   = c.sub;
+    badge.textContent = data.risk_level.toUpperCase();
+    badge.className   = "badge " + c.badgeClass;
+
+    // Scores
+    const barColor = data.risk_level === "high" ? "#ef4444" : data.risk_level === "medium" ? "#f59e0b" : "#22c55e";
+    setScore("final", data.final_score, barColor);
+    setScore("email", data.email_score, "#6366f1");
+    setScore("url",   data.url_score,   "#f59e0b");
+
+    // URLs
+    const urlsSection = document.getElementById("urls-section");
+    const urlList     = document.getElementById("url-list");
+    urlList.innerHTML = "";
+
+    if (data.urls_found && data.urls_found.length > 0) {
+      urlsSection.style.display = "block";
+      data.urls_found.forEach(url => {
+        const li = document.createElement("li");
+        li.className = "url-item";
+        li.innerHTML = `
+          <span title="${escHtml(url)}">${escHtml(url)}</span>
+          <button class="btn btn-ghost" onclick="openSandbox('${escAttr(url)}')">
+            🔍 Inspect Safely
+          </button>`;
+        urlList.appendChild(li);
+      });
+    } else {
+      urlsSection.style.display = "none";
+    }
+
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function setScore(key, val, color) {
+    const pct = Math.round(val * 100);
+    document.getElementById("score-" + key).textContent = pct + "%";
+    const bar = document.getElementById("bar-" + key);
+    bar.style.width = pct + "%";
+    bar.style.background = color;
+  }
+
+  // ── Sandbox inspector ──────────────────────────────────────────────────────
+
+  async function openSandbox(url) {
+    document.getElementById("modal-url-title").textContent = url;
+    document.getElementById("modal-body").innerHTML = `
+      <div class="loading-inspect">
+        <div class="spinner" style="display:inline-block; margin-bottom:0.5rem"></div>
+        <div>Fetching page safely... no JS, cookies blocked</div>
+      </div>`;
+    document.getElementById("modal-overlay").classList.add("open");
+
+    try {
+      const res = await fetch("/inspect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      renderInspection(data);
+    } catch (e) {
+      document.getElementById("modal-body").innerHTML =
+        `<div class="error-box">Failed to inspect: ${escHtml(String(e))}</div>`;
+    }
+  }
+
+  function renderInspection(d) {
+    let html = "";
+
+    // Blocked / error
+    if (!d.safe_to_fetch) {
+      html += `<div class="error-box">🚫 Blocked: ${escHtml(d.blocked_reason || "Unknown reason")}</div>`;
+      document.getElementById("modal-body").innerHTML = html;
+      return;
+    }
+
+    if (d.error) {
+      html += `<div class="error-box">⚠️ ${escHtml(d.error)}</div>`;
+    }
+
+    // Meta info
+    html += `<div class="section-title">Page Info</div>`;
+    html += `<div class="form-detail">
+      <b>Status:</b> ${d.status_code || "—"} &nbsp;|&nbsp;
+      <b>Title:</b> ${escHtml(d.title || "N/A")} &nbsp;|&nbsp;
+      <b>Size:</b> ${(d.page_size_bytes / 1024).toFixed(1)} KB
+    </div>`;
+
+    // Redirect chain
+    if (d.redirect_chain && d.redirect_chain.length > 0) {
+      html += `<div class="section-title mt-1">Redirect Chain</div>`;
+      html += `<div class="redirect-chain">`;
+      d.redirect_chain.forEach((r, i) => {
+        html += `<span>${i + 1}. ${escHtml(r)}</span>`;
+      });
+      if (d.final_url !== d.url) {
+        html += `<span>→ Final: ${escHtml(d.final_url)}</span>`;
+      }
+      html += `</div>`;
+    }
+
+    // Signals
+    if (d.signals && Object.keys(d.signals).length > 0) {
+      html += `<div class="section-title mt-1">Phishing Signals</div>`;
+      html += `<div class="signal-grid">`;
+      const labels = {
+        has_password_field:   "Password input field",
+        has_suspicious_form:  "Suspicious form keywords",
+        has_hidden_iframe:    "Hidden iframe detected",
+        external_form_action: "Form submits to external domain",
+        brand_impersonation:  "Brand impersonation (PayPal, Amazon…)",
+      };
+      for (const [key, val] of Object.entries(d.signals)) {
+        const dotClass = val ? "dot-red" : "dot-green";
+        const label    = labels[key] || key;
+        html += `<div class="signal-item">
+          <div class="dot ${dotClass}"></div>
+          <span>${label}</span>
+        </div>`;
+      }
+      html += `</div>`;
+    }
+
+    // Visible text preview
+    if (d.visible_text_preview) {
+      html += `<div class="section-title mt-1">Visible Page Text (preview)</div>`;
+      html += `<div class="text-preview">${escHtml(d.visible_text_preview)}</div>`;
+    }
+
+    // Forms
+    if (d.forms && d.forms.length > 0) {
+      html += `<div class="section-title mt-1">Forms Detected (${d.forms.length})</div>`;
+      d.forms.forEach((f, i) => {
+        html += `<div class="form-detail">
+          <b>Form ${i + 1}</b> &nbsp; action: <code>${escHtml(f.action || "(none)")}</code><br/>
+          Inputs: ${f.input_types.map(t => `<code>${escHtml(t)}</code>`).join(", ") || "none"}
+        </div>`;
+      });
+    }
+
+    // External links
+    if (d.external_links_count > 0) {
+      html += `<div class="section-title mt-1">External Links (${d.external_links_count} total)</div>`;
+      d.external_links_sample.forEach(link => {
+        html += `<div class="form-detail" style="word-break:break-all">${escHtml(link)}</div>`;
+      });
+    }
+
+    document.getElementById("modal-body").innerHTML = html;
+  }
+
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+  }
+
+  // Close modal on overlay click
+  document.getElementById("modal-overlay").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  function clearAll() {
+    document.getElementById("email-input").value = "";
+    document.getElementById("result").style.display = "none";
+    lastAnalysis = null;
+  }
+
+  function setLoading(on) {
+    document.getElementById("spinner").style.display = on ? "inline-block" : "none";
+    document.getElementById("btn-text").textContent  = on ? "Analyzing..." : "Analyze Email";
+    document.getElementById("analyze-btn").disabled  = on;
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escAttr(s) {
+    return String(s).replace(/'/g, "\\'");
+  }
+</script>
+</body>
+</html>
