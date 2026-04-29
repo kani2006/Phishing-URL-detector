@@ -1,8 +1,3 @@
-"""
-email_classifier.py
-NLP-based classifier for email body text using TF-IDF + Logistic Regression.
-"""
-
 import os
 import re
 import joblib
@@ -23,7 +18,6 @@ STOP_WORDS = set(stopwords.words("english"))
 
 
 def preprocess(text: str) -> str:
-    """Lowercase, strip HTML tags, remove punctuation, drop stopwords."""
     text = re.sub(r'<[^>]+>', ' ', text)           # strip HTML
     text = re.sub(r'https?://\S+|www\.\S+', ' ', text)  # remove URLs
     text = re.sub(r'[^a-zA-Z\s]', ' ', text)       # keep only letters
@@ -33,10 +27,6 @@ def preprocess(text: str) -> str:
 
 
 def train(data_path: str):
-    """
-    Train the email classifier from a CSV with columns: text, label (0=benign, 1=phishing).
-    Saves pipeline to models/.
-    """
     df = pd.read_csv(data_path)
     df["clean"] = df["text"].apply(preprocess)
 
@@ -58,9 +48,6 @@ def train(data_path: str):
 
 
 def predict(email_text: str) -> float:
-    """
-    Returns phishing probability [0.0 - 1.0] for email body text.
-    """
     pipeline = joblib.load(MODEL_PATH)
     clean = preprocess(email_text)
     prob = pipeline.predict_proba([clean])[0]
