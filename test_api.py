@@ -1,9 +1,3 @@
-"""
-test_api.py
-Quick end-to-end test for the phishing detection API.
-Make sure app.py is running before executing this.
-"""
-
 import requests
 import json
 
