@@ -1,13 +1,3 @@
-"""
-app.py
-Flask REST API for the phishing detection engine.
-
-Endpoints:
-  POST /analyze   - Analyze a raw email body
-  POST /train     - Trigger model training (dev use)
-  GET  /health    - Health check
-"""
-
 import sys
 import os
 
@@ -35,20 +25,6 @@ def health():
 
 @app.route("/analyze", methods=["POST"])
 def analyze_email():
-    """
-    Request body (JSON):
-      { "email_text": "<raw email body>" }
-
-    Response:
-      {
-        "email_score": 0.82,
-        "url_score": 0.91,
-        "urls_found": ["http://..."],
-        "final_score": 0.87,
-        "risk_level": "high",
-        "is_phishing": true
-      }
-    """
     data = request.get_json(force=True)
     email_text = data.get("email_text", "").strip()
 
@@ -68,13 +44,6 @@ def analyze_email():
 
 @app.route("/train", methods=["POST"])
 def train_models():
-    """
-    Request body (JSON):
-      {
-        "url_data": "data/urls.csv",      # CSV with columns: url, label
-        "email_data": "data/emails.csv"   # CSV with columns: text, label
-      }
-    """
     import url_classifier
     import email_classifier
 
@@ -106,16 +75,6 @@ def train_models():
 
 @app.route("/inspect", methods=["POST"])
 def inspect_url():
-    """
-    Safely fetch and inspect a potentially malicious URL.
-    No JS executed, cookies blocked, private IPs blocked, size capped.
-
-    Request body (JSON):
-      { "url": "http://suspicious-site.xyz/login" }
-
-    Response includes page title, visible text preview, form details,
-    redirect chain, and phishing signals (password fields, brand impersonation, etc.)
-    """
     data = request.get_json(force=True)
     url = data.get("url", "").strip()
 
@@ -150,7 +109,6 @@ def analyze_and_inspect():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    # Only inspect URLs if email is flagged as phishing
     inspections = []
     if analysis["is_phishing"] and analysis["urls_found"]:
         for url in analysis["urls_found"][:3]:   # cap at 3 URLs per email
