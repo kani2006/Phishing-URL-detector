@@ -1,8 +1,3 @@
-"""
-url_classifier.py
-Trains and runs a Random Forest classifier on URL features.
-"""
-
 import os
 import joblib
 import numpy as np
@@ -64,10 +59,6 @@ def train(data_path: str):
 
 
 def predict(url: str) -> float:
-    """
-    Returns phishing probability [0.0 - 1.0] for a single URL.
-    Loads model from disk on first call.
-    """
     clf = joblib.load(MODEL_PATH)
     encoder = joblib.load(ENCODER_PATH)
 
