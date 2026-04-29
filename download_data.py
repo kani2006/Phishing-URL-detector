@@ -1,13 +1,3 @@
-"""
-download_data.py
-Downloads and prepares training data from free public sources.
-
-Sources:
-  Emails : Enron Spam dataset (GitHub - MWiechmann/enron_spam_data)
-  URLs   : PhishTank + CommonCrawl mix (GitHub - vonpower/PhishingDataset sample)
-           + fallback synthetic generation if download fails
-"""
-
 import os
 import sys
 import requests
