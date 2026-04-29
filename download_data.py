@@ -8,13 +8,11 @@ import string
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# ── Dataset URLs ──────────────────────────────────────────────────────────────
 
 ENRON_URL = (
     "https://raw.githubusercontent.com/MWiechmann/enron_spam_data/master/enron_spam_data.csv"
 )
 
-# Phishing URLs from a curated public GitHub repo (small sample file)
 PHISHING_URLS_URL = (
     "https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/phishing-domains-ACTIVE.txt"
 )
@@ -22,9 +20,6 @@ PHISHING_URLS_URL = (
 BENIGN_URLS_URL = (
     "https://raw.githubusercontent.com/nicktindall/cyclon.p2p/master/test/data/urls.txt"
 )
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def download(url: str, label: str) -> bytes | None:
     print(f"  Downloading {label}...")
@@ -37,8 +32,6 @@ def download(url: str, label: str) -> bytes | None:
         print(f"  ✗ Failed: {e}")
         return None
 
-
-# ── Email dataset ─────────────────────────────────────────────────────────────
 
 def prepare_emails():
     out_path = os.path.join(DATA_DIR, "emails.csv")
@@ -106,8 +99,6 @@ def _generate_synthetic_emails(out_path: str):
     df.to_csv(out_path, index=False)
     print(f"  ✓ Saved {len(df)} synthetic emails → data/emails.csv")
 
-
-# ── URL dataset ───────────────────────────────────────────────────────────────
 
 def prepare_urls():
     out_path = os.path.join(DATA_DIR, "urls.csv")
@@ -190,10 +181,7 @@ def _generate_synthetic_urls(out_path: str):
 
     df = pd.DataFrame(rows).sample(frac=1, random_state=42).reset_index(drop=True)
     df.to_csv(out_path, index=False)
-    print(f"  ✓ Saved {len(df)} synthetic URLs → data/urls.csv")
-
-
-# ── Main ──────────────────────────────────────────────────────────────────────
+    print(f"  Saved {len(df)} synthetic URLs → data/urls.csv")
 
 if __name__ == "__main__":
     print("\n=== Preparing Email Dataset ===")
