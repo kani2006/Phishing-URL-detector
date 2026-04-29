@@ -13,5 +13,3 @@ url_classifier.train(URL_DATA)
 
 print("\n=== Training Email Classifier ===")
 email_classifier.train(EMAIL_DATA)
-
-print("\n=== All models trained. Run: python3 app.py ===")
