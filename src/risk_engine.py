@@ -14,10 +14,6 @@ RISK_THRESHOLDS = {
 
 
 def _url_score(email_text: str) -> float:
-    """
-    Extract URLs from email and return the max phishing probability
-    across all found URLs. Returns 0.0 if no URLs found.
-    """
     urls = extract_urls(email_text)
     if not urls:
         return 0.0
