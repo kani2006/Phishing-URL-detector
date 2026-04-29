@@ -1,8 +1,3 @@
-"""
-url_extractor.py
-Extracts and parses URLs from raw email text.
-"""
-
 import re
 import tldextract
 from urllib.parse import urlparse
@@ -16,7 +11,6 @@ URL_PATTERN = re.compile(
 
 
 def extract_urls(text: str) -> list[str]:
-    """Extract all URLs from email body text."""
     return URL_PATTERN.findall(text)
 
 
